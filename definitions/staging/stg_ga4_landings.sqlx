@@ -1,0 +1,17 @@
+config {
+  type: "table", // Creates a view in BigQuery. Try changing to "table" instead.
+}
+
+ select
+      date,
+      event_timestamp,
+      customer_type,
+      stitched_user_id,
+      page_title as landing_page,
+      page,
+      device
+
+from ${ref('base_ga4_pages')}
+where is_landing_page = 1 and page not like '%orders%' 
+and page not like '%cart%' and page not like '%checkout%'
+ and page_title not like '%Checkout%'

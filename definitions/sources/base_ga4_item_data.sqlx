@@ -1,0 +1,60 @@
+config {
+  type: "table", 
+}
+ js {
+    var { TIME_ZONE } = require("includes/constants");
+  }
+
+
+with item_data as (
+  select
+  date(timestamp_micros(event_timestamp), '${constants.TIME_ZONE}') as date,
+    items.item_category as item_category,
+    items.item_id as item_id,
+    items.item_name as item_name,
+    sum(items.item_revenue) as item_revenue,
+    sum(
+      case
+        when event_name = 'add_to_cart' then 1
+        else 0
+      end
+    ) as add_to_cart_cm_1,
+    sum(
+      case
+        when event_name = 'purchase' then 1
+        else 0
+      end
+    ) as purchase_cm_2,
+    sum(
+      case
+        when event_name = 'view_item' then 1
+        else 0
+      end
+    ) as view_item_cm_3
+  from
+     ${ref(constants.GA4_TABLE)},
+    unnest(items) as items
+  where event_name in ('view_item', 'purchase', 'add_to_cart')
+  group by
+    item_category,
+    item_id,
+    item_name,
+    date
+)
+
+select
+  date,
+  item_category,
+  item_id,
+  item_name,
+  sum(view_item_cm_3) as view_items,
+  sum(add_to_cart_cm_1) as add_to_carts,
+  sum(purchase_cm_2) as purchases,
+  sum(item_revenue) as item_revenue
+from
+  item_data
+group by
+  item_category,
+  item_id,
+  item_name,
+  date

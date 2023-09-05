@@ -1,0 +1,40 @@
+config {
+  type: "table", 
+}
+ js {
+    var { TIME_ZONE } = require("includes/constants");
+  }
+
+with prep as (select
+    date(timestamp_micros(event_timestamp), '${constants.TIME_ZONE}') as date,
+    time(timestamp_micros(event_timestamp), '${constants.TIME_ZONE}') as event_timestamp,
+    user_pseudo_id,
+    device.category as device,
+    (select value.string_value from unnest(event_params) where event_name = 'page_view' and key = 'page_title') as page_title,
+    (select value.string_value from unnest(event_params) where event_name = 'page_view' and key = 'page_location') as page,
+    max(case when (select value.int_value from unnest(event_params) where event_name = 'page_view' and key = 'entrances') = 1 then 1 else 0 end) as is_landing_page
+from
+    ${ref(constants.GA4_TABLE)} a
+where
+    event_name = 'page_view'
+group by 1,2,3,4,5,6
+)
+
+ select
+      a.date,
+      a.event_timestamp,
+      page_title,
+      case 
+        when b.user_id is not null then 'customer' else 'non-customer' end
+    as customer_type,
+       case 
+        when b.user_id is not null then user_id else a.user_pseudo_id 
+        end
+    as stitched_user_id,
+      is_landing_page,
+      page,
+      device
+
+from prep a
+left join ${ref('base_ga4_user_identification')} b
+on a.user_pseudo_id = b.user_pseudo_id

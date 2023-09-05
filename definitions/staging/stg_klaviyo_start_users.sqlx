@@ -1,0 +1,14 @@
+config {
+  type: "view", // Creates a view in BigQuery. Try changing to "table" instead.
+}
+
+SELECT
+   date,
+   form_id,
+   form_action,
+   form_title,
+   stitched_user_id,
+   stitched_user_id AS klaviyo_form_start
+FROM ${ ref('base_ga4_klaviyo') }
+WHERE event_name = 'start'
+GROUP BY 1,2,3,4,5,6

@@ -1,0 +1,14 @@
+config {
+  type: "table"
+}
+select
+     user_pseudo_id,
+     max(user_id) as user_id,
+from 
+     ${ref(constants.GA4_TABLE)}
+where 
+     user_id is not null
+group by 
+     1
+order by 
+     user_id

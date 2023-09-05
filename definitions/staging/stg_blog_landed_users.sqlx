@@ -1,0 +1,18 @@
+config {
+  type: "view", // Creates a view in BigQuery. Try changing to "table" instead.
+}
+ js {
+    var { PRODUCTS_PAGE_REGEXP } = require("includes/constants");
+  }
+
+  
+SELECT
+   date,
+   device,
+   stitched_user_id,
+   stitched_user_id AS home_page_landed_users,
+   page
+FROM ${ ref('stg_ga4_landings') }
+WHERE page like '%blogs%'
+and stitched_user_id is not null
+GROUP BY 1, 2, 3, 4,5

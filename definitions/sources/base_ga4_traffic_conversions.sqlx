@@ -1,0 +1,70 @@
+config {
+  type: "table", // Creates a view in BigQuery. Try changing to "table" instead.
+}
+ js {
+    var { TIME_ZONE } = require("includes/constants");
+  }
+  
+with prep as (
+select
+    date(timestamp_micros(event_timestamp), '${constants.TIME_ZONE}') as date,
+    user_pseudo_id,
+    device.category as device,
+    traffic_source.name as campaign,
+    case
+    when concat(lower(traffic_source.source),' / ',lower(traffic_source.medium))
+    in ('facebook-ads / socialadv', 'paidsocial / ig_fb','facebook / paid','facebook / cpc' )  
+    then 'Paid Social'
+    when lower(traffic_source.medium) = 'email' or lower(traffic_source.medium) = 'flow-email' then 'Email'
+    when lower(traffic_source.medium) = 'affiliate' then 'Affiliate'
+    when lower(traffic_source.source) in ('facebook', 'instagram', 'twittert.co', 'linkedin', 'tiktok', 'youtube') then 'Social'
+    when lower(traffic_source.source) = 'google' and lower(traffic_source.medium) = 'cpc' then 'Paid Search'
+    when lower(traffic_source.source) in ('bing', 'yahoo', 'baidu', 'duckduckgo') then 'Organic Search'
+    when lower(traffic_source.medium) = 'referral' then 'Referral'
+    when lower(traffic_source.source) like '%direct%' or concat(lower(traffic_source.source),' / ',lower(traffic_source.medium)) is null  then 'Direct'
+    else concat(lower(traffic_source.source),' / ',lower(traffic_source.medium))
+   end as custom_channel,
+    (select value.int_value from unnest(event_params) where key = 'ga_session_id') as session_id,
+    (select value.int_value from unnest(event_params) where key = 'ga_session_number') as session_number,
+    max((select value.string_value from unnest(event_params) where key = 'session_engaged')) as session_engaged,
+    max(case when event_name = 'add_to_cart' then user_pseudo_id else null end) as add_to_cart_users,
+    max(case when event_name = 'view_item' then user_pseudo_id else null end) as view_item_users,
+    max(case when event_name = 'purchase' then user_pseudo_id else null end) as purchasers,
+    max(case when event_name = 'begin_checkout' then user_pseudo_id else null end) as checkout_users,
+    max(case when event_name = 'add_payment_info' then user_pseudo_id else null end) as add_payment_users,
+    count(distinct(case when event_name = 'purchase' then ecommerce.transaction_id end)) as transactions,
+    sum(ecommerce.purchase_revenue) as revenue
+    from ${ref(constants.GA4_TABLE)}
+group by
+    1,2,3,4,5,6,7)
+select
+    date,
+    device,
+    custom_channel,
+    campaign,
+    case 
+        when b.user_id is not null then 'customer' else 'non-customer' end
+    as customer_type,
+    case 
+        when b.user_id is not null then b.user_id else a.user_pseudo_id 
+        end
+    as stitched_user_id,
+    add_to_cart_users,
+    view_item_users,
+    checkout_users,
+    purchasers,
+    add_payment_users,
+    count(distinct concat(a.user_pseudo_id,session_id)) as sessions,
+    count(distinct case when session_engaged = '1' then concat(a.user_pseudo_id,session_id) end) as engaged_sessions,
+    max(case when session_number = 1 then 1 else null end) as new_users,
+    max(transactions) as transactions,
+    max(revenue) as revenue
+from
+    prep a
+left join ${ref('base_ga4_user_identification')} b
+on a.user_pseudo_id = b.user_pseudo_id
+where a.user_pseudo_id is not null
+group by 
+    1,2,3,4,5,6,7,8,9,10,11
+order by 
+    date desc

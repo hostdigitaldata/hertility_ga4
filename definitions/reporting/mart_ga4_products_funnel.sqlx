@@ -1,0 +1,29 @@
+config {
+  type: "table"
+}
+
+with user_segments as (select 
+   a.date,
+   a.device,
+   a.stitched_user_id,
+   a.stitched_user_id as product_landed_users,
+   b.checkout_users as checkout_users,
+   b.purchasers as purchasers,
+   checkout_users as funnel_checkout,
+   case 
+   when checkout_users is not null and purchasers is not null then purchasers
+   else null end as funnel_purchase
+from ${ref('stg_products_landed_users')} a
+left join ${ref('base_ga4_traffic_conversions')} b
+on a.date = b.date and a.stitched_user_id = b.stitched_user_id
+group by 1,2,3,4,5,6,7)
+
+select 
+   date,
+   device,
+   'all steps' as bar_dimension,
+   count(distinct product_landed_users) as funnel_product_landed,
+   count(distinct funnel_checkout) as funnel_checkout,
+   count(distinct funnel_purchase) as funnel_purchase
+from user_segments
+group by 1,2,3

@@ -1,0 +1,28 @@
+config {
+  type: "table"
+}
+
+with distinct_titles as (
+  select distinct form_id, form_title
+  from hostinsight.dataform.base_ga4_klaviyo
+  where form_action = 'submit' and form_title is not null
+)
+
+select
+  t.date,
+  t.form_id,
+  'all steps' as bar_dimension,
+  regexp_extract(t.page, r'^https?:\/\/[^\/]+(\/[^?#]*)') as page,
+  count(distinct if(t.form_action = 'start', t.stitched_user_id, null)) as count_start_users,
+  count(distinct if(t.form_action = 'open', t.stitched_user_id, null)) as count_open_users,
+  count(distinct if(t.form_action = 'submit', t.stitched_user_id, null)) as count_submit_users,
+  dt.form_title
+from
+  hostinsight.dataform.base_ga4_klaviyo as t
+left join
+  distinct_titles as dt
+on
+  t.form_id = dt.form_id
+where stitched_user_id is not null
+group by
+  t.date, t.page, t.form_id, dt.form_title, bar_dimension

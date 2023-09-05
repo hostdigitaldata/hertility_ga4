@@ -1,0 +1,11 @@
+config {
+  type: "view", // Creates a view in BigQuery. Try changing to "table" instead.
+}
+
+SELECT
+   date,
+   stitched_user_id,
+   stitched_user_id AS account_register_form_submit_users
+FROM ${ ref('base_ga4_forms') }
+WHERE REGEXP_CONTAINS(page, 'account/register') and event_name = 'form_submit'
+GROUP BY 1,2,3

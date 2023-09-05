@@ -1,0 +1,34 @@
+config {
+  type: "table", 
+}
+ js {
+    var { TIME_ZONE } = require("includes/constants");
+  }
+
+with prep as (select
+    date(timestamp_micros(event_timestamp), '${constants.TIME_ZONE}') as date,
+    event_name,
+    device.category as device,
+    time(timestamp_micros(event_timestamp), '${constants.TIME_ZONE}') as event_timestamp,
+    user_pseudo_id,
+    (select value.string_value from unnest(event_params) where key = 'page_location') as page
+from
+    ${ref(constants.GA4_TABLE)} a
+where
+    event_name = 'form_start' or event_name = 'form_submit'
+)
+
+ select
+      a.date,
+      a.event_timestamp,
+      event_name,
+      device,
+      page,
+       case 
+        when b.user_id is not null then user_id else a.user_pseudo_id 
+        end
+    as stitched_user_id
+
+from prep a
+left join ${ref('base_ga4_user_identification')} b
+on a.user_pseudo_id = b.user_pseudo_id

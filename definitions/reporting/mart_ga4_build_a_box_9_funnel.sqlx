@@ -1,0 +1,32 @@
+config {
+  type: "table"
+}
+
+
+with user_segments as (select 
+   a.date,
+   a.device,
+   a.stitched_user_id,
+   add_to_box_users,
+   build_box_9_users,
+   add_payment_users,
+   b.checkout_users as checkout_users,
+   b.purchasers as purchasers
+from ${ref('stg_build_box_9_users')} a
+left join ${ref('base_ga4_traffic_conversions')} b
+on a.date = b.date and a.stitched_user_id = b.stitched_user_id
+left join ${ref('stg_add_to_box_users')} c
+on a.date = c.date and a.stitched_user_id = c.stitched_user_id
+group by 1,2,3,4,5,6,7,8)
+
+select 
+   date,
+   device,
+   'all steps' as bar_dimension,
+   count(distinct build_box_9_users) as funnel_build_box_9_click,
+   count(distinct add_to_box_users) as funnel_add_to_box,
+   count(distinct add_payment_users) as funnel_payment,
+   count(distinct checkout_users) as funnel_checkout,
+   count(distinct purchasers) as funnel_purchase
+from user_segments
+group by 1,2,3

@@ -1,0 +1,14 @@
+config {
+  type: "view", // Creates a view in BigQuery. Try changing to "table" instead.
+}
+
+SELECT
+   date,
+   device,
+   stitched_user_id,
+   stitched_user_id AS build_box_3_users
+
+FROM ${ ref('base_ga4_build_a_box') }
+WHERE action = 'BUILD A BOX OF 3' and stitched_user_id is not null
+
+GROUP BY 1, 2, 3

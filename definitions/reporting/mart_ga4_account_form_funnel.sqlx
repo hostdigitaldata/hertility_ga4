@@ -1,0 +1,27 @@
+config {
+  type: "table"
+}
+
+with user_segments as (select 
+   a.date,
+   a.stitched_user_id,
+   a.device,
+   account_register_page_users,
+   account_register_form_start_users,
+   account_register_form_submit_users
+from ${ref('stg_ga4_account_register_users')} a
+left join ${ref('stg_account_register_form_start_users')} b
+on a.date = b.date and a.stitched_user_id = b.stitched_user_id
+left join ${ref('stg_account_register_form_submit_users')} c
+on a.date = c.date and a.stitched_user_id = c.stitched_user_id
+group by 1,2,3,4,5,6)
+
+select 
+   date,
+   device,
+   'all steps' as bar_dimension,
+   count(distinct account_register_page_users) as funnel_page_visit,
+   count(distinct account_register_form_start_users) as funnel_form_start,
+   count(distinct account_register_form_submit_users) as funnel_submit
+from user_segments
+group by 1,2,3
