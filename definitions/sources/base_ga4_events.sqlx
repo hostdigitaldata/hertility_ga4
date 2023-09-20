@@ -5,31 +5,27 @@ config {
     var { TIME_ZONE } = require("includes/constants");
   }
 
-with prep as (select
+with prep as 
+(select
     date(timestamp_micros(event_timestamp), '${constants.TIME_ZONE}') as date,
     event_name,
     device.category as device,
+    concat(traffic_source.source,' / ',traffic_source.medium) as source_medium,
     time(timestamp_micros(event_timestamp), '${constants.TIME_ZONE}') as event_timestamp,
     user_pseudo_id,
-    user_id,
-    (select value.string_value from unnest(event_params) where key = 'klaviyo_event_type') as form_action,
-    (select value.string_value from unnest(event_params) where key = 'form_id') as form_id,
-    (select value.string_value from unnest(event_params) where key = 'form_title') as form_title,
-    (select value.string_value from unnest(event_params) where key = 'page_location') as page
+    user_id
 from
     ${ref(constants.GA4_TABLE)} a
 where
-    event_name = 'klaviyo'
-)
+    event_name IN ('quiz_start', 'quiz_finish', 'add_payment_info', 'purchase', 'view_item', 'add_to_cart', 'view_cart', 'begin_checkout', 'view_item_list')
+    )
 
  select
       a.date,
       a.event_timestamp,
       event_name,
-      form_action,
-      form_id,
-      form_title,
-      page,
+      device,
+      source_medium,
        case 
         when a.user_id is not null then a.user_id 
         when b.user_id is not null then b.user_id 
@@ -40,4 +36,3 @@ where
 from prep a
 left join ${ref('base_ga4_user_identification')} b
 on a.user_pseudo_id = b.user_pseudo_id
-where date > '2023-06-19'
