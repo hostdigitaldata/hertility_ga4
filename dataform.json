@@ -1,8 +1,8 @@
 {
-  "defaultSchema": "dataform",
+  "defaultSchema": "ga4_marts",
   "assertionSchema": "dataform_assertions",
   "warehouse": "bigquery",
-  "defaultDatabase": "hostinsight",
-  "defaultLocation": "europe-west8"
+  "defaultDatabase": "swift-hope-397007",
+  "defaultLocation": "europe-west2"
 }
     
