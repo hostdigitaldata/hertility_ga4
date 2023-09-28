@@ -8,17 +8,17 @@ config {
     source_medium,
     stitched_user_id,
     case
-      when page like '%/health-assessment/privacy?skipsection=true%' then 'Start OHA'
-      when page like '%/health-assessment/last-period?skipsection=false%' then 'General health complete'
-      when page like '%/health-assessment/pregnancy?skipsection=false%' then 'Period complete'
-      when page like '%/health-assessment/bmi?skipsection=false%' then 'Pregnancy complete'
-      when page like '%/health-assessment/algorithm?skipsection=false%' then 'Lifestyle complete'
-      when page like '%/checkout/cart-summary%' then 'Cart Summary'
-      when page like '%/checkout/addons%' then 'Addons'
-      when page like '%/checkout/account%' then 'Account'
-      when page like '%/order-confirm%' then 'Purchase'
-      else 'other'
-    end as funnel_step,
+      when regexp_contains(lower(page), r'/health-assessment/privacy\?.*skipsection=true') then 'Start OHA'
+      when regexp_contains(lower(page), r'/health-assessment/last-period\?.*skipsection=false') then 'General health complete'
+      when regexp_contains(lower(page), r'/health-assessment/pregnancy\?.*skipsection=false') then 'Period complete'
+      when regexp_contains(lower(page), r'/health-assessment/bmi\?.*skipsection=false') then 'Pregnancy complete'
+      when regexp_contains(lower(page), r'/health-assessment/algorithm\?.*skipsection=false') then 'Lifestyle complete'
+      when regexp_contains(lower(page), r'/checkout/cart-summary') then 'Cart Summary'
+      when regexp_contains(lower(page), r'/checkout/addons') then 'Addons'
+      when regexp_contains(lower(page), r'/checkout/account') then 'Account'
+      when regexp_contains(lower(page), r'/order-confirm') then 'Purchase'
+  else 'other'
+end as funnel_step,
     region
   from ${ ref('base_ga4_pages') }
   where date >= '2023-09-27'
