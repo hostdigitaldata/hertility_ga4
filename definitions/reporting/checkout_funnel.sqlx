@@ -1,3 +1,7 @@
+config {
+  type: "table"
+}
+
 with user_segments as (
     select 
         a.date,
@@ -21,6 +25,6 @@ select
     count(distinct case when add_payment_info_users is not null then user_id end) as funnel_add_payment_info,
     count(distinct case when add_payment_info_users is not null and purchasers is not null then user_id end) as funnel_purchase
 from user_segments
-group by 1, 2, 3;
+group by 1, 2, 3
 
 

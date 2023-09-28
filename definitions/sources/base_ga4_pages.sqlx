@@ -12,10 +12,11 @@ with prep as (select
     device.category as device,
     concat(traffic_source.source,' / ',traffic_source.medium) as source_medium,
     (select value.string_value from unnest(event_params) where event_name = 'page_view' and key = 'page_location') as page,
+    (select value.string_value from unnest(event_params) where key = 'territory') as region
  from   ${ref(constants.GA4_TABLE)} a
 where
     event_name = 'page_view'
-group by 1,2,3,4,5,6
+group by 1,2,3,4,5,6,7
 )
 
  select
@@ -30,7 +31,8 @@ group by 1,2,3,4,5,6
     as stitched_user_id,
       page,
       device,
-      source_medium
+      source_medium,
+      region
 
 from prep a
 left join ${ref('base_ga4_user_identification')} b
