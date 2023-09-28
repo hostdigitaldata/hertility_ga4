@@ -4,11 +4,12 @@ config {
 
   select
     date,
+    event_timestamp,
     device,
     source_medium,
     stitched_user_id,
     case
-      when regexp_contains(lower(page), r'/health-assessment/privacy\?.*skipsection=true') then 'Start OHA'
+      when regexp_contains(lower(page), r'/health-assessment/privacy') then 'Start OHA'
       when regexp_contains(lower(page), r'/health-assessment/last-period\?.*skipsection=false') then 'General health complete'
       when regexp_contains(lower(page), r'/health-assessment/pregnancy\?.*skipsection=false') then 'Period complete'
       when regexp_contains(lower(page), r'/health-assessment/bmi\?.*skipsection=false') then 'Pregnancy complete'

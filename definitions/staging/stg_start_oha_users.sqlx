@@ -1,0 +1,8 @@
+config {
+  type: "table"
+}
+
+select
+  distinct stitched_user_id
+from ${ref('stg_page_visitors')}
+where funnel_step = 'Start OHA'

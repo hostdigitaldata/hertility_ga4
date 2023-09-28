@@ -1,0 +1,17 @@
+config {
+  type: "table"
+}
+
+select
+  date,
+  event_timestamp,
+  device,
+  funnel_step,
+  source_medium,
+  stitched_user_id,
+  region
+from ${ref('stg_page_visitors')}
+where funnel_step != 'other' 
+and stitched_user_id in
+(select stitched_user_id from ${ref('stg_start_oha_users')})
+group by  1,2,3,4,5,6,7
