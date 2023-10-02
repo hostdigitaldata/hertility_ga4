@@ -20,6 +20,9 @@ config {
       when regexp_contains(lower(page), r'/order-confirm') then 'Purchase'
   else 'other'
 end as funnel_step,
+case when regexp_contains(lower(page), r'/health-assessment') then true
+else false
+end  as oha_funnel_inclusion,
     region
   from ${ ref('base_ga4_pages') }
   where date >= '2023-09-27'
