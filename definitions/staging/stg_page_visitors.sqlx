@@ -9,11 +9,11 @@ config {
     source_medium,
     stitched_user_id,
     case
-      when regexp_contains(lower(page), r'/health-assessment/privacy') then 'Start OHA'
-      when regexp_contains(lower(page), r'/health-assessment/last-period\?.*skipsection=false') then 'General health complete'
-      when regexp_contains(lower(page), r'/health-assessment/pregnancy\?.*skipsection=false') then 'Period complete'
-      when regexp_contains(lower(page), r'/health-assessment/bmi\?.*skipsection=false') then 'Pregnancy complete'
-      when regexp_contains(lower(page), r'/health-assessment/algorithm\?.*skipsection=false') then 'Lifestyle complete'
+      when regexp_contains(lower(page), r'/health-assessment/goal') then 'Start OHA'
+      when regexp_contains(lower(page), r'/health-assessment/last-period') then 'General health complete'
+      when regexp_contains(lower(page), r'/health-assessment/pregnancy') then 'Period complete'
+      when regexp_contains(lower(page), r'/health-assessment/bmi') then 'Pregnancy complete'
+      when regexp_contains(lower(page), r'/health-assessment/algorithm') then 'Lifestyle complete'
       when regexp_contains(lower(page), r'/checkout/cart-summary') then 'Cart Summary'
       when regexp_contains(lower(page), r'/checkout/addons') then 'Addons'
       when regexp_contains(lower(page), r'/checkout/account') then 'Account'
