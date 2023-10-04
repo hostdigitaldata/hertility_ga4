@@ -12,12 +12,13 @@ with prep as
     device.category as device,
     concat(traffic_source.source,' / ',traffic_source.medium) as source_medium,
     time(timestamp_micros(event_timestamp), '${constants.TIME_ZONE}') as event_timestamp,
+    (select value.string_value from unnest(event_params) where key = 'page_location') as page,
     user_pseudo_id,
     user_id
 from
     ${ref(constants.GA4_TABLE)} a
 where
-    event_name IN ('quiz_start', 'quiz_finish', 'add_payment_info', 'purchase', 'view_item', 'add_to_cart', 'view_cart', 'begin_checkout', 'view_item_list')
+    event_name IN ('quiz_start', 'quiz_finish', 'add_payment_info', 'purchase', 'view_item', 'add_to_cart', 'view_cart', 'begin_checkout', 'view_item_list', 'sign_up')
     )
 
  select
@@ -25,6 +26,7 @@ where
       a.event_timestamp,
       event_name,
       device,
+      page,
       source_medium,
        case 
         when a.user_id is not null then a.user_id 

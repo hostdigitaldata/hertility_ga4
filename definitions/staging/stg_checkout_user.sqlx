@@ -1,0 +1,11 @@
+config {
+  type: "view", // Creates a view in BigQuery. Try changing to "table" instead.
+}
+
+  select
+    stitched_user_id,
+    min(date) as first_user_checkout_date
+
+  from ${ ref('base_ga4_pages') }
+  where page like '%checkout%'
+  group by 1
