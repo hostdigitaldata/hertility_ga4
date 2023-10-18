@@ -1,0 +1,46 @@
+config {
+  type: "view", // Creates a view in BigQuery. Try changing to "table" instead.
+}
+
+WITH non_null_sessions AS (
+  SELECT
+    user_pseudo_id,
+    session_id,
+    session_number,
+    max(event_source_medium) as event_source_medium
+  FROM
+    ${ref("stg_session_attribution")}
+  WHERE
+    event_source_medium IS NOT NULL
+  GROUP BY 1,2,3
+),
+campaigns as (
+ select 
+ session_id,
+  max(
+    case
+     when event_source_medium is not null and event_campaign is null 
+     then '(not set}'
+     when event_source_medium is null  
+     then null
+  else event_campaign end) as event_campaign 
+  
+  from
+  ${ref("stg_session_attribution")}
+  group by 1
+)
+
+SELECT
+  nns.user_pseudo_id,
+  nns.session_id,
+  nns.session_number,
+  max(nns.event_source_medium) as event_source_medium,
+  max(c.event_campaign) as event_campaign
+FROM
+  non_null_sessions AS nns
+LEFT JOIN
+campaigns c
+
+ON
+  nns.session_id = c.session_id
+    GROUP BY 1,2,3

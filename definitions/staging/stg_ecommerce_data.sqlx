@@ -1,0 +1,26 @@
+config {
+    type: "table"
+}
+
+SELECT
+  date,
+  region,
+  CASE
+    WHEN b.session_source_medium IS NULL OR b.session_source_medium = " / " THEN 'direct / (none)'
+  ELSE
+  session_source_medium
+END
+  AS session_source_medium,
+  b.session_campaign AS session_campaign,
+  transaction_id,
+  item_name,
+  item_quantity AS items_purchased,
+  item_price,
+  coupon AS order_coupon,
+  purchase_revenue
+FROM
+  ${ref("base_ga4_ecommerce")} a
+LEFT JOIN
+  ${ref("stg_last_non_direct_attribution")} b
+ON
+  CAST(a.session_id AS STRING) = b.session_id

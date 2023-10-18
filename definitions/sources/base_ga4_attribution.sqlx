@@ -1,0 +1,35 @@
+config {
+  type: "table"
+}
+with prep as(
+select
+  user_pseudo_id,
+  CONCAT(
+    IFNULL(traffic_source.source, ''),
+    ' / ',
+    IFNULL(traffic_source.medium, '')
+  ) as user_source_medium,
+  traffic_source.name as user_campaign,
+  concat(user_pseudo_id, (select value.int_value from unnest(event_params) where key = 'ga_session_id')) as session_id,
+  (select value.string_value from unnest(event_params) where key = 'gclid') as event_gclid,
+  (select value.string_value from unnest(event_params) where key = 'source') as event_source,
+  (select value.string_value from unnest(event_params) where key = 'medium') as event_medium,
+  (select value.string_value from unnest(event_params) where key = 'campaign') as event_campaign,
+  (select value.int_value from unnest(event_params) where key = 'ga_session_number') as session_number
+from
+  ${ref(constants.GA4_TABLE)}
+)
+
+select 
+ user_pseudo_id,
+ user_source_medium,
+ user_campaign,
+ session_id,
+ event_gclid,
+ event_source,
+ event_medium,
+ event_campaign,
+ session_number
+ from prep
+ group by 1,2,3,4,5,6,7,8,9
+  

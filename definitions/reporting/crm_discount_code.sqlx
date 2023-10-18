@@ -1,0 +1,8 @@
+config {
+    type: "table"
+
+}
+SELECT
+  *
+FROM
+  ${ref('stg_ecommerce_data')}

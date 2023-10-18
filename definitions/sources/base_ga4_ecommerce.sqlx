@@ -1,0 +1,38 @@
+config {
+  type: "table"
+}
+ js {
+    var { TIME_ZONE } = require("includes/constants");
+  }
+
+with prep as(
+  select
+  date(timestamp_micros(event_timestamp), '${constants.TIME_ZONE}') as date,
+  user_pseudo_id,
+      ecommerce.transaction_id AS transaction_id,
+      ecommerce.purchase_revenue AS purchase_revenue,
+      items.item_name as item_name,
+      items.quantity AS item_quantity,
+      items.price AS item_price,
+      (select value.int_value from unnest(event_params) where key = 'ga_session_id') as session_id,
+      (select value.string_value from unnest(event_params) where key = 'coupon') as coupon,
+      (select value.string_value from unnest(event_params) where key = 'territory') as region
+  from
+     ${ref(constants.GA4_TABLE)},
+    unnest(items) as items
+  where event_name = 'purchase')
+
+  select 
+    date,
+    transaction_id,
+    purchase_revenue,
+    item_name,
+    item_quantity,
+    item_price,
+    region,
+    coupon,
+    concat(user_pseudo_id, session_id) as session_id
+  from prep
+group by 1,2,3,4,5,6,7,8,9
+
+  

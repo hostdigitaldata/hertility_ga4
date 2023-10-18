@@ -1,0 +1,49 @@
+config {
+  type: "table"
+}
+
+WITH prep AS (
+  SELECT
+    user_pseudo_id,
+    session_id,
+    session_number,
+    event_campaign,
+    event_source,
+    event_medium,
+    user_source_medium,
+    user_campaign,
+    CASE
+      WHEN event_gclid IS NOT NULL and (event_source like '%Google%'
+        or event_source like '%youtube%' or event_source like "%google%") 
+      THEN "google / cpc"
+      WHEN event_source IS NULL and event_medium IS NULL THEN NULL
+      ELSE CONCAT(IFNULL(event_source, ''), ' / ', IFNULL(event_medium, ''))
+    END AS event_source_medium
+  FROM
+    ${ref("base_ga4_attribution")}
+)
+
+SELECT
+  user_pseudo_id,
+  session_id,
+  session_number as session_number,
+  event_source,
+  event_medium,
+  CASE
+    WHEN session_number = 1 THEN user_source_medium
+    ELSE event_source_medium
+  END AS event_source_medium,
+  CASE
+    WHEN session_number = 1 THEN user_campaign 
+    WHEN event_source_medium IS NOT NULL AND event_campaign IS NULL THEN '(not set)'
+    ELSE event_campaign
+  END AS event_campaign
+FROM (
+  SELECT
+    *,
+    ROW_NUMBER() OVER (PARTITION BY user_pseudo_id, session_number ORDER BY event_source_medium IS NOT NULL DESC) AS rn
+  FROM prep
+) ranked_prep
+WHERE rn = 1
+GROUP BY 1, 2, 3, 4, 5, 6, 7
+HAVING session_number < 50 AND session_id IS NOT NULL
