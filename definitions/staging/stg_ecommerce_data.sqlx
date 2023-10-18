@@ -23,4 +23,4 @@ FROM
 LEFT JOIN
   ${ref("stg_last_non_direct_attribution")} b
 ON
-  CAST(a.session_id AS STRING) = b.session_id
+  CAST(a.session_id AS STRING) = b.first_session_id

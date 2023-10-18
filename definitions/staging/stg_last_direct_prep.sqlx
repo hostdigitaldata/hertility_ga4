@@ -1,0 +1,31 @@
+config {
+  type: "table"
+
+}
+
+with FilteredData as(
+SELECT
+    user_pseudo_id,
+    session_id AS first_session_id,
+    session_number AS first_table_session_number
+  FROM
+    ${ref("stg_session_attribution")}
+  group by 1,2,3)
+
+SELECT
+    FD.user_pseudo_id,
+    FD.first_session_id,
+    FD.first_table_session_number,
+   OSD.event_source_medium,
+     OSD.event_campaign AS session_campaign,
+    OSD.session_id AS second_table_session_id,
+    OSD.session_number AS second_table_session_number
+  FROM
+    FilteredData FD
+  LEFT JOIN 
+
+      ${ref("stg_not_null_sources")}
+     OSD
+  ON
+    FD.user_pseudo_id = OSD.user_pseudo_id
+    AND OSD.session_number <= FD.first_table_session_number

@@ -3,99 +3,30 @@ config {
 
 }
 
-WITH FilteredData AS (
+WITH Deduplicated AS (
   SELECT
     user_pseudo_id,
-    session_id AS first_session_id,
-    session_number AS first_table_session_number
+    first_session_id,
+    first_table_session_number,
+    event_source_medium,
+    session_campaign,
+    second_table_session_id,
+    second_table_session_number,
+    ROW_NUMBER() OVER (PARTITION BY user_pseudo_id, first_table_session_number ORDER BY second_table_session_number DESC) AS row_num
   FROM
-    ${ref("stg_session_attribution")}
-  WHERE
-    event_source_medium IS NULL
-    OR session_number > 1
-  group by 1,2,3
-),
-
-JoinedData AS (
-  SELECT
-    FD.user_pseudo_id,
-    FD.first_session_id,
-    FD.first_table_session_number,
-    COALESCE(OSD.event_source_medium) AS session_source_medium,
-     COALESCE(OSD.event_campaign) AS session_campaign,
-    OSD.session_id AS second_table_session_id,
-    OSD.session_number AS second_table_session_number
-  FROM
-    FilteredData FD
-  LEFT JOIN (
-    SELECT
-      user_pseudo_id,
-      event_source_medium,
-      session_id,
-      session_number,
-      event_campaign
-    FROM
-      ${ref("stg_not_null_sources")}
-    ) OSD
-  ON
-    FD.user_pseudo_id = OSD.user_pseudo_id
-    AND OSD.session_number < FD.first_table_session_number
-),
-source_attribution as (
+    ${ref("stg_last_direct_prep")}
+)
 
 SELECT
   user_pseudo_id,
-  first_session_id AS session_id,
-  first_table_session_number AS session_number,
-  LAST_VALUE(session_source_medium) OVER (PARTITION BY user_pseudo_id ORDER BY second_table_session_number DESC) AS session_source_medium,
+  first_session_id,
+  first_table_session_number,
+  event_source_medium as session_source_medium,
+  session_campaign,
+  second_table_session_id,
+  second_table_session_number
 FROM
-  JoinedData),
-
-all_attribution as(
-
-select
-    a.user_pseudo_id,
-    a.session_id, 
-    a.session_source_medium,
-    a.session_number,
-    b.session_campaign
-from source_attribution a
-left join JoinedData b
-on a.user_pseudo_id = b.user_pseudo_id
-and a.session_source_medium = b.session_source_medium
-),
-attr as(
-select 
-     user_pseudo_id,
-  session_id,
-  session_number,
-  session_source_medium,
-  session_campaign
-
-   from all_attribution
-
-
-UNION ALL
-
--- Second part of the UNION: Data from stg_session_attribution where session_source_medium is not NULL or session_number is 1
-SELECT
-  user_pseudo_id,
-  session_id,
-  session_number,
-  max(event_source_medium) as session_source_medium,
-  max(event_campaign) as session_campaign
-FROM
-  ${ref("stg_session_attribution")}
+  Deduplicated
 WHERE
-  event_source_medium IS NOT NULL
-  OR session_number = 1
-  GROUP BY 1,2,3)
+  row_num = 1
 
-  select 
-        user_pseudo_id,
-        session_id,
-        session_number,
-        max(session_source_medium) as session_source_medium,
-        max(session_campaign) as session_campaign
-    from attr
-    group by 1,2,3
