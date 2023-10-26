@@ -1,0 +1,32 @@
+config {
+  type: "table", 
+}
+ js {
+    var { TIME_ZONE } = require("includes/constants");
+  }
+
+WITH prep AS (
+  SELECT
+    date(timestamp_micros(event_timestamp), '${constants.TIME_ZONE}') AS date,
+    timestamp_micros(event_timestamp) AS event_timestamp,
+    timestamp_micros(user_first_touch_timestamp) AS user_first_touch_timestamp,
+    user_pseudo_id,
+    event_name,
+    device.category AS device,
+    CONCAT(traffic_source.source, ' / ', traffic_source.medium) AS source_medium,
+    (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'page_location') AS page,
+    (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'page_referrer') AS referrer,
+    (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'territory') AS region,
+    (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'isGuestCheckoutVariant') AS is_guest_checkout
+  FROM ${ref(constants.GA4_TABLE)}
+  WHERE
+    (event_name = 'page_view' OR event_name = 'purchase')
+    AND _TABLE_SUFFIX >= '20231025'
+)
+
+SELECT
+  *,
+  case when is_guest_checkout = 'true' then 'variant' else 'control' end as exp_variant,
+  TIMESTAMP_DIFF(event_timestamp, user_first_touch_timestamp, SECOND) > 86400 AS is_old_user
+FROM prep
+
