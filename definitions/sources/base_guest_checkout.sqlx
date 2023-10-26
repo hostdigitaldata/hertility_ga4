@@ -29,4 +29,5 @@ SELECT
   case when is_guest_checkout = 'true' then 'variant' else 'control' end as exp_variant,
   TIMESTAMP_DIFF(event_timestamp, user_first_touch_timestamp, SECOND) > 86400 AS is_old_user
 FROM prep
+where page not like '%stage.hertilityhealth%'
 
