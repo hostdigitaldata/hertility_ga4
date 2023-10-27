@@ -11,13 +11,13 @@ config {
     exp_variant,
     case
       when regexp_contains(lower(page), r'/health-assessment/contact') then '/health-assessment/contact'
-      when regexp_contains(lower(page), r'/health-assessment/privacy') then 'health-assessment/privacy'
+      when regexp_contains(lower(page), r'/health-assessment/privacy') then '/health-assessment/privacy'
       when regexp_contains(lower(page), r'/health-assessment\/') then '/health-assessment/'
       when regexp_contains(lower(page), r'/checkout/cart-summary') then '/checkout/cart-summary'
       when regexp_contains(lower(page), r'/checkout/addons') then '/checkout/addon'
       when regexp_contains(lower(page), r'/checkout/account') then '/checkout/account'
       when event_name = 'purchase' then 'purchase'
-      when regexp_contains(lower(page),  r'/checkout/cart$') then 'checkout/cart'
+      when regexp_contains(lower(page),  r'/checkout/cart$') then '/checkout/cart'
       when regexp_contains(lower(referrer), r'verify-account') 
       and regexp_contains(lower(page), r'your-orders') then 'create_post_purchase_account'
   else 'other'
@@ -38,7 +38,7 @@ end as funnel_type,
 case when regexp_contains(lower(page), r'/health-assessment') then true
 else false
 end  as kit_journey_inclusion,
-case when regexp_contains(lower(page), r'/checkout/cart\/') then true
+case when regexp_contains(lower(page), r'/checkout/cart$') then true
 else false
 end as non_kit_journey_inclusion
 
