@@ -16,8 +16,7 @@ WITH prep AS (
     CONCAT(traffic_source.source, ' / ', traffic_source.medium) AS source_medium,
     (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'page_location') AS page,
     (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'page_referrer') AS referrer,
-    (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'territory') AS region,
-    (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'isGuestCheckoutVariant') AS is_guest_checkout
+    (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'territory') AS region
   FROM ${ref(constants.GA4_TABLE)}
   WHERE
     (event_name = 'page_view' OR event_name = 'purchase')
@@ -26,7 +25,6 @@ WITH prep AS (
 
 SELECT
   *,
-  case when is_guest_checkout = 'true' then 'variant' else 'control' end as exp_variant,
   TIMESTAMP_DIFF(event_timestamp, user_first_touch_timestamp, SECOND) > 86400 AS is_old_user
 FROM prep
 where page not like '%stage.hertilityhealth%'

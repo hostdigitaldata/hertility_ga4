@@ -3,30 +3,15 @@ config {
 }
 
 select
-  date,
-  user_pseudo_id,
-  device,
-  funnel_step,
-  'control' as experiment,
-  region
-from ${ref('stg_guest_checkout_funnel')}
-where funnel_step != 'other' and funnel_type != 'non_kit'
-and user_pseudo_id in
-(select user_pseudo_id from ${ref('kit_journey_control')})
-group by  1,2,3,4,5,6
-
-union all
-
-
-select
-  date,
-  user_pseudo_id,
-  device,
-  funnel_step,
-  'variant' as experiment,
-  region
-from ${ref('stg_guest_checkout_funnel')}
-where funnel_step != 'other'  and funnel_type != 'non_kit'
-and user_pseudo_id in
-(select user_pseudo_id from ${ref('kit_journey_variant')})
-group by  1,2,3,4,5,6
+  a.date,
+  a.user_pseudo_id,
+  a.device,
+  a.funnel_step,
+  a.region,
+  case when experiment = 'variant' then 'variant'
+  else 'control' end as experiment
+from ${ref('stg_guest_checkout_funnel')} a
+left join ${ref('base_experiment')} b
+on a.user_pseudo_id = b.user_pseudo_id
+where funnel_step != 'other' and funnel_type != 'non_kit' 
+and kit_journey_inclusion is true 

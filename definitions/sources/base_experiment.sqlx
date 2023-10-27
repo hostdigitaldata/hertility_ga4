@@ -1,0 +1,28 @@
+config {
+  type: "table", 
+}
+ js {
+    var { TIME_ZONE } = require("includes/constants");
+  }
+
+with prep as(
+  SELECT
+    user_pseudo_id,
+    (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'isGuestCheckoutVariant') AS isGuestCheckout
+  FROM ${ref(constants.GA4_TABLE)}
+  WHERE
+    (event_name = 'experiment_impression')
+    AND _TABLE_SUFFIX >= '20231025'
+)
+
+select 
+     user_pseudo_id,
+     'variant' as experiment
+
+     from prep
+    where isGuestCheckout = 'true'
+     group by user_pseudo_id
+union all
+select 
+    '12345' as user_pseudo_id,
+     'variant' as experiment

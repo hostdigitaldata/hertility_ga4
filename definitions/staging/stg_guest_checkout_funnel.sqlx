@@ -8,7 +8,6 @@ config {
     device,
     user_pseudo_id,
     region,
-    exp_variant,
     case
       when regexp_contains(lower(page), r'/health-assessment/contact') then '/health-assessment/contact'
       when regexp_contains(lower(page), r'/health-assessment/privacy') then '/health-assessment/privacy'
