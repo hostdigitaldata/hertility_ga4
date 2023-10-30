@@ -11,6 +11,7 @@ WITH prep AS (
     timestamp_micros(event_timestamp) AS event_timestamp,
     timestamp_micros(user_first_touch_timestamp) AS user_first_touch_timestamp,
     user_pseudo_id,
+    user_id,
     event_name,
     device.category AS device,
     CONCAT(traffic_source.source, ' / ', traffic_source.medium) AS source_medium,

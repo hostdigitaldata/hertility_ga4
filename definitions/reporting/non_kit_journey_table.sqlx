@@ -15,3 +15,8 @@ left join ${ref('base_experiment')} b
 on a.user_pseudo_id = b.user_pseudo_id
 where funnel_step != 'other' and funnel_type != 'kit' 
 and non_kit_journey_inclusion is true 
+AND ( 
+    (funnel_step != 'purchase' AND logged_in_status != 'logged_in') 
+    OR 
+    (funnel_step = 'purchase') 
+  )

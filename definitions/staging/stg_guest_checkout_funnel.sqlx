@@ -27,6 +27,7 @@ SELECT
     a.event_timestamp,
     a.device,
     a.user_pseudo_id,
+    CASE WHEN a.user_id IS NOT NULL THEN 'logged_in' ELSE 'logged_out' END AS logged_in_status,
     a.region,
     CASE
         WHEN regexp_contains(lower(a.page), r'/health-assessment/contact') THEN '/health-assessment/contact'
