@@ -2,43 +2,60 @@ config {
   type: "table", // Creates a view in BigQuery. Try changing to "table" instead.
 }
 
-  select
-    date,
-    event_timestamp,
-    device,
-    user_pseudo_id,
-    region,
-    case
-      when regexp_contains(lower(page), r'/health-assessment/contact') then '/health-assessment/contact'
-      when regexp_contains(lower(page), r'/health-assessment/privacy') then '/health-assessment/privacy'
-      when regexp_contains(lower(page), r'/health-assessment\/') then '/health-assessment/'
-      when regexp_contains(lower(page), r'/checkout/cart-summary') then '/checkout/cart-summary'
-      when regexp_contains(lower(page), r'/checkout/addons') then '/checkout/addon'
-      when regexp_contains(lower(page), r'/checkout/account') then '/checkout/account'
-      when event_name = 'purchase' then 'purchase'
-      when regexp_contains(lower(page),  r'/checkout/cart$') then '/checkout/cart'
-      when regexp_contains(lower(referrer), r'verify-account') 
-      and regexp_contains(lower(page), r'your-orders') then 'create_post_purchase_account'
-  else 'other'
-end as funnel_step,
- case
-      when regexp_contains(lower(page), r'/health-assessment/contact') then 'kit'
-      when regexp_contains(lower(page), r'/health-assessment/privacy') then 'kit'
-      when regexp_contains(lower(page), r'/health-assessment\/') then 'kit'
-      when regexp_contains(lower(page), r'/checkout/cart-summary') then 'kit'
-      when regexp_contains(lower(page), r'/checkout/addons') then 'kit'
-      when regexp_contains(lower(page), r'/checkout/account') then 'all'
-      when event_name = 'purchase' then 'all'
-      when regexp_contains(lower(page),  r'/checkout/cart$') then 'non_kit'
-      when regexp_contains(lower(referrer), r'verify-account') 
-      and regexp_contains(lower(page), r'your-orders') then 'all'
-  else 'other'
-end as funnel_type,
-case when regexp_contains(lower(page), r'/health-assessment') then true
-else false
-end  as kit_journey_inclusion,
-case when regexp_contains(lower(page), r'/checkout/cart$') then true
-else false
-end as non_kit_journey_inclusion
-
-  from ${ ref('base_guest_checkout') }
+WITH UserKitJourney AS (
+    SELECT
+        user_pseudo_id,
+        MAX(CASE 
+            WHEN regexp_contains(lower(page), r'/health-assessment') THEN TRUE
+            ELSE FALSE
+        END) AS user_kit_journey_inclusion
+    FROM `swift-hope-397007.ga4_marts.base_guest_checkout`
+    GROUP BY user_pseudo_id
+),
+UserNonKitJourney AS (
+    SELECT
+        user_pseudo_id,
+        MAX(CASE 
+            WHEN regexp_contains(lower(page), r'/checkout/cart$') THEN TRUE
+            ELSE FALSE
+        END) AS user_non_kit_journey_inclusion
+    FROM `swift-hope-397007.ga4_marts.base_guest_checkout`
+    GROUP BY user_pseudo_id
+)
+SELECT
+    a.date,
+    a.event_timestamp,
+    a.device,
+    a.user_pseudo_id,
+    a.region,
+    CASE
+        WHEN regexp_contains(lower(a.page), r'/health-assessment/contact') THEN '/health-assessment/contact'
+        WHEN regexp_contains(lower(a.page), r'/health-assessment/privacy') THEN '/health-assessment/privacy'
+        WHEN regexp_contains(lower(a.page), r'/health-assessment\/') THEN '/health-assessment/'
+        WHEN regexp_contains(lower(a.page), r'/checkout/cart-summary') THEN '/checkout/cart-summary'
+        WHEN regexp_contains(lower(a.page), r'/checkout/addons') THEN '/checkout/addon'
+        WHEN regexp_contains(lower(a.page), r'/checkout/account') THEN '/checkout/account'
+        WHEN a.event_name = 'purchase' THEN 'purchase'
+        WHEN regexp_contains(lower(a.page), r'/checkout/cart$') THEN '/checkout/cart'
+        WHEN regexp_contains(lower(a.referrer), r'verify-account') AND regexp_contains(lower(a.page), r'your-orders') THEN 'create_post_purchase_account'
+        ELSE 'other'
+    END AS funnel_step,
+    CASE
+        WHEN regexp_contains(lower(a.page), r'/health-assessment/contact') THEN 'kit'
+        WHEN regexp_contains(lower(a.page), r'/health-assessment/privacy') THEN 'kit'
+        WHEN regexp_contains(lower(a.page), r'/health-assessment\/') THEN 'kit'
+        WHEN regexp_contains(lower(a.page), r'/checkout/cart-summary') THEN 'kit'
+        WHEN regexp_contains(lower(a.page), r'/checkout/addons') THEN 'kit'
+        WHEN regexp_contains(lower(a.page), r'/checkout/account') THEN 'all'
+        WHEN a.event_name = 'purchase' THEN 'all'
+        WHEN regexp_contains(lower(a.page), r'/checkout/cart$') THEN 'non_kit'
+        WHEN regexp_contains(lower(a.referrer), r'verify-account') AND regexp_contains(lower(a.page), r'your-orders') THEN 'all'
+        ELSE 'other'
+    END AS funnel_type,
+    b.user_kit_journey_inclusion AS kit_journey_inclusion,
+    c.user_non_kit_journey_inclusion AS non_kit_journey_inclusion
+FROM `swift-hope-397007.ga4_marts.base_guest_checkout` a
+LEFT JOIN UserKitJourney b
+ON a.user_pseudo_id = b.user_pseudo_id
+LEFT JOIN UserNonKitJourney c
+ON a.user_pseudo_id = c.user_pseudo_id

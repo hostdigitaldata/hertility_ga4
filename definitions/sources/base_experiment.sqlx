@@ -8,7 +8,7 @@ config {
 with prep as(
   SELECT
     user_pseudo_id,
-    (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'isGuestCheckoutVariant') AS isGuestCheckout
+    (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'isGuestCheckout') AS isGuestCheckout
   FROM ${ref(constants.GA4_TABLE)}
   WHERE
     (event_name = 'experiment_impression')
