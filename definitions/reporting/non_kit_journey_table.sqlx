@@ -8,8 +8,11 @@ select
   a.device,
   a.funnel_step,
   a.region,
-  case when experiment = 'variant' then 'variant'
-  else 'control' end as experiment
+  case 
+      when a.funnel_step = 'create_post_purchase_account' then 'variant'
+      when b.experiment = 'variant' then 'variant'
+      else 'control' 
+  end as experiment
 from ${ref('stg_guest_checkout_funnel')} a
 left join ${ref('base_experiment')} b
 on a.user_pseudo_id = b.user_pseudo_id
