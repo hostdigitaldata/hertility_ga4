@@ -15,6 +15,6 @@ select
     event_date,
     signup_count,
     purchase_count,
-    purchase_count / signup_count as conversion_rate
+    safe_divide (purchase_count, signup_count) as conversion_rate
   from prep
 order by event_date desc
