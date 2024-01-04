@@ -12,20 +12,27 @@ with prep as
     device.category as device,
     concat(traffic_source.source,' / ',traffic_source.medium) as source_medium,
     time(timestamp_micros(event_timestamp), '${constants.TIME_ZONE}') as event_timestamp,
+    event_timestamp as custom_timestamp,
     (select value.string_value from unnest(event_params) where key = 'page_location') as page,
+     (select value.string_value from unnest(event_params) where key = 'territory') as region,
+    (select value.int_value from unnest(event_params) where key = 'ga_session_id') as session_id,
     user_pseudo_id,
     user_id
 from
     ${ref(constants.GA4_TABLE)} a
 where
-    event_name IN ('quiz_start', 'quiz_finish', 'add_payment_info', 'purchase', 'view_item', 'add_to_cart', 'view_cart', 'begin_checkout', 'view_item_list', 'sign_up')
+    event_name IN 
+    ('quiz_start', 'quiz_finish', 'add_payment_info', 'purchase', 'view_item', 'add_to_cart', 'view_cart', 'begin_checkout', 
+    'view_item_list', 'sign_up', 'user_engagement', 'scroll')
     )
 
  select
       a.date,
       a.event_timestamp,
+      a.custom_timestamp,
       event_name,
       device,
+      region,
       page,
       source_medium,
        case 
@@ -33,7 +40,8 @@ where
         when b.user_id is not null then b.user_id 
         else a.user_pseudo_id 
         end
-    as stitched_user_id
+    as stitched_user_id,
+      concat(a.user_pseudo_id,session_id) as session_id
 
 from prep a
 left join ${ref('base_ga4_user_identification')} b

@@ -6,6 +6,8 @@ SELECT
   date,
   event_timestamp,
   device,
+  custom_timestamp,
+  session_id,
   source_medium,
   stitched_user_id,
   CASE
@@ -28,6 +30,12 @@ END
   FALSE
 END
   AS oha_funnel_inclusion,
+ CASE
+    WHEN REGEXP_CONTAINS(LOWER(page), r'/your-report') THEN TRUE
+  ELSE
+  FALSE
+END
+  AS test_result_inclusion,
   region
 FROM
   ${ref('base_ga4_pages')}

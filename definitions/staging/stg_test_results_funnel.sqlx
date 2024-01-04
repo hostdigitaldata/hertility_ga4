@@ -1,0 +1,30 @@
+config {
+    type: "table", // Creates a view in BigQuery. Try changing to "table" instead.
+}
+
+select
+date,
+  custom_timestamp,
+  user_id,
+  device,
+  region,
+  event_name,
+  page,
+CASE
+    WHEN REGEXP_CONTAINS(LOWER(page), r'step=$') THEN 'Overview'
+    WHEN REGEXP_CONTAINS(LOWER(page), r'step=overview') THEN 'Overview'
+    WHEN REGEXP_CONTAINS(LOWER(page), r'step=from-your-doctor') THEN 'Notes'
+    WHEN REGEXP_CONTAINS(LOWER(page), r'step=hormone-levels') THEN 'Hormones'
+    WHEN REGEXP_CONTAINS(LOWER(page), r'step=hormone-details') THEN 'Explained'
+    WHEN REGEXP_CONTAINS(LOWER(page), r'step=analysis') THEN 'Analysis'
+    WHEN REGEXP_CONTAINS(LOWER(page), r'step=your-next-steps') THEN 'Next Steps'
+    WHEN REGEXP_CONTAINS(LOWER(page), r'step=insights') THEN 'Insights'
+  ELSE
+  'other'
+END
+  AS funnel_step
+
+from ${ref('stg_test_results')}
+group by 1,2,3,4,5,6,7
+having funnel_step != 'other'
+order by date, user_id, custom_timestamp
