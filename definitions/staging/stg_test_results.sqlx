@@ -9,6 +9,7 @@ select
   page,
   device,
   region,
+  session_id,
   'page_view' as event_name
 from ${ref('base_ga4_pages')}
 where REGEXP_CONTAINS(LOWER(page), r'/your-report') and custom_timestamp is not null
@@ -22,6 +23,7 @@ select
   page,
   device,
   region,
+  session_id,
   event_name
 from ${ref('base_ga4_events')}
 where REGEXP_CONTAINS(LOWER(page), r'/your-report') and date >= '2023-12-26'

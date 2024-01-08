@@ -13,9 +13,10 @@ SELECT
     device,
     region,
     funnel_step,
-    LEAD(custom_timestamp) OVER (PARTITION BY user_id ORDER BY custom_timestamp) AS next_timestamp,
-    LEAD(event_name) OVER (PARTITION BY user_id ORDER BY custom_timestamp) AS next_event_name,
-    LEAD(funnel_step) OVER (PARTITION BY user_id ORDER BY custom_timestamp) AS next_funnel_step
+    session_id,
+    LEAD(custom_timestamp) OVER (PARTITION BY session_id ORDER BY custom_timestamp) AS next_timestamp,
+    LEAD(event_name) OVER (PARTITION BY session_id ORDER BY custom_timestamp) AS next_event_name,
+    LEAD(funnel_step) OVER (PARTITION BY session_id ORDER BY custom_timestamp) AS next_funnel_step
   FROM
     ${ref('stg_test_results_funnel')}
   WHERE
@@ -29,6 +30,7 @@ no_next_pageview AS (
     region,
     custom_timestamp,
     event_name,
+    session_id,
     funnel_step
   FROM
     pageviews
@@ -41,6 +43,7 @@ events AS (
     user_id,
     device,
     region,
+    session_id,
     custom_timestamp,
     event_name,
     funnel_step
@@ -52,8 +55,9 @@ events AS (
       region,
       custom_timestamp,
       event_name,
+      session_id,
       funnel_step,
-      ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY custom_timestamp DESC) AS rn
+      ROW_NUMBER() OVER (PARTITION BY session_id ORDER BY custom_timestamp DESC) AS rn
     FROM
        ${ref('stg_test_results_funnel')}
     WHERE
@@ -72,6 +76,7 @@ events AS (
     region,
     custom_timestamp,
     event_name,
+    session_id,
     funnel_step,
     next_timestamp - custom_timestamp AS time_difference
   FROM
@@ -87,6 +92,7 @@ events AS (
     pv.user_id AS user_id,
     pv.device,
     pv.region,
+    pv.session_id,
     pv.funnel_step AS funnel_step,
     case when e.custom_timestamp is not null and (e.custom_timestamp / 1000) > pv.custom_timestamp
     then (e.custom_timestamp/1000) -  pv.custom_timestamp
@@ -96,7 +102,7 @@ events AS (
   LEFT JOIN
     events e
   ON
-    pv.user_id = e.user_id AND pv.funnel_step = e.funnel_step
+    pv.session_id = e.session_id AND pv.funnel_step = e.funnel_step
     and pv.device = e.device
 )
 
@@ -108,6 +114,7 @@ SELECT
   funnel_step,
   device,
   region,
+  session_id,
   time_difference / 1000 AS time_in_seconds
 FROM
   page_time_diff
@@ -117,9 +124,10 @@ UNION ALL
 SELECT
   date,
   user_id,
-  funnel_step,
+  funnel_step as page,
   device,
   region,
+  session_id,
   time_difference / 1000 AS time_in_seconds
 FROM
   event_time_diff
