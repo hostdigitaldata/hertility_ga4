@@ -100,30 +100,41 @@ WITH
   ON
     pv.session_id = e.session_id
     AND pv.funnel_step = e.funnel_step
-    AND pv.device = e.device )
-    -- Union the results
+    AND pv.device = e.device ),
+  unioned AS (
+  -- Union the results
+  SELECT
+    date,
+    user_id,
+    funnel_step AS page,
+    device,
+    region,
+    session_id,
+    time_difference / 1000 AS time_in_seconds
+  FROM
+    page_time_diff
+  UNION ALL
+  SELECT
+    date,
+    user_id,
+    funnel_step AS page,
+    device,
+    region,
+    session_id,
+    time_difference / 1000 AS time_in_seconds
+  FROM
+    event_time_diff
+  WHERE
+    time_difference IS NOT NULL
+  ORDER BY
+    user_id)
 SELECT
-  date,
-  user_id,
-  funnel_step as page,
-  device,
-  region,
-  session_id,
-  time_difference / 1000 AS time_in_seconds
+  *
 FROM
-  page_time_diff
-UNION ALL
-SELECT
-  date,
-  user_id,
-  funnel_step AS page,
-  device,
-  region,
-  session_id,
-  time_difference / 1000 AS time_in_seconds
-FROM
-  event_time_diff
+  unioned
 WHERE
-  time_difference IS NOT NULL
-ORDER BY
-  user_id
+  user_id NOT IN (
+  SELECT
+    user_id
+  FROM
+    ${ref('user_id_to_exclude')} )

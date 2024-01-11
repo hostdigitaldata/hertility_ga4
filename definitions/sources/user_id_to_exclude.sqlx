@@ -1,0 +1,7 @@
+config {
+  type: "table"
+}
+
+
+select distinct user_id
+from help_tables.user_id_blackilist
