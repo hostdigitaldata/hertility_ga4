@@ -1,28 +1,43 @@
 config {
-  type: "view", // Creates a view in BigQuery. Try changing to "table" instead.
+    type: "view", // Creates a view in BigQuery. Try changing to "table" instead.
 }
 
-  select
-    date,
-    event_timestamp,
-    device,
-    source_medium,
-    stitched_user_id,
-    case
-      when regexp_contains(lower(page), r'/health-assessment/goal') then 'Start OHA'
-      when regexp_contains(lower(page), r'/health-assessment/last-period') then 'General health complete'
-      when regexp_contains(lower(page), r'/health-assessment/pregnancy') then 'Period complete'
-      when regexp_contains(lower(page), r'/health-assessment/bmi') then 'Pregnancy complete'
-      when regexp_contains(lower(page), r'/health-assessment/algorithm') then 'Lifestyle complete'
-      when regexp_contains(lower(page), r'/checkout/cart-summary') then 'Cart Summary'
-      when regexp_contains(lower(page), r'/checkout/addons') then 'Addons'
-      when regexp_contains(lower(page), r'/checkout/account') then 'Account'
-      when regexp_contains(lower(page), r'/order-confirm') then 'Purchase'
-  else 'other'
-end as funnel_step,
-case when regexp_contains(lower(page), r'/health-assessment') then true
-else false
-end  as oha_funnel_inclusion,
-    region
-  from ${ ref('base_ga4_pages') }
-  where date >= '2023-09-27'
+SELECT
+  date,
+  event_timestamp,
+  device,
+  custom_timestamp,
+  session_id,
+  source_medium,
+  stitched_user_id,
+  CASE
+    WHEN REGEXP_CONTAINS(LOWER(page), r'/health-assessment/goal') THEN 'Start OHA'
+    WHEN REGEXP_CONTAINS(LOWER(page), r'/health-assessment/last-period') THEN 'General health complete'
+    WHEN REGEXP_CONTAINS(LOWER(page), r'/health-assessment/pregnancy') THEN 'Period complete'
+    WHEN REGEXP_CONTAINS(LOWER(page), r'/health-assessment/bmi') THEN 'Pregnancy complete'
+    WHEN REGEXP_CONTAINS(LOWER(page), r'/health-assessment/about-us') THEN 'Lifestyle complete'
+    WHEN REGEXP_CONTAINS(LOWER(page), r'/checkout/cart-summary') THEN 'Cart Summary'
+    WHEN REGEXP_CONTAINS(LOWER(page), r'/checkout/addons') THEN 'Addons'
+    WHEN REGEXP_CONTAINS(LOWER(page), r'/checkout/account') THEN 'Account'
+    WHEN REGEXP_CONTAINS(LOWER(page), r'/order-confirm') THEN 'Purchase'
+  ELSE
+  'other'
+END
+  AS funnel_step,
+  CASE
+    WHEN REGEXP_CONTAINS(LOWER(page), r'/health-assessment') THEN TRUE
+  ELSE
+  FALSE
+END
+  AS oha_funnel_inclusion,
+ CASE
+    WHEN REGEXP_CONTAINS(LOWER(page), r'/your-report') THEN TRUE
+  ELSE
+  FALSE
+END
+  AS test_result_inclusion,
+  region
+FROM
+  ${ref('base_ga4_pages')}
+WHERE
+  date >= '2023-09-27'

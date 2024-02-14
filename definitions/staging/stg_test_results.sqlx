@@ -1,0 +1,29 @@
+config {
+    type: "table", // Creates a view in BigQuery. Try changing to "table" instead.
+}
+
+select
+  date,
+  custom_timestamp,
+  stitched_user_id as user_id,
+  page,
+  device,
+  region,
+  session_id,
+  'page_view' as event_name
+from ${ref('base_ga4_pages')}
+where REGEXP_CONTAINS(LOWER(page), r'/your-report') and custom_timestamp is not null
+
+union all
+
+select
+  date,
+  custom_timestamp,
+  stitched_user_id as user_id,
+  page,
+  device,
+  region,
+  session_id,
+  event_name
+from ${ref('base_ga4_events')}
+where REGEXP_CONTAINS(LOWER(page), r'/your-report') and date >= '2023-12-26'

@@ -1,0 +1,140 @@
+config {
+    type: "table", // Creates a view in BigQuery. Try changing to "table" instead.
+}
+
+WITH
+  pageviews AS (
+  SELECT
+    date,
+    user_id,
+    custom_timestamp,
+    event_name,
+    device,
+    region,
+    funnel_step,
+    session_id,
+    LEAD(custom_timestamp) OVER (PARTITION BY session_id ORDER BY custom_timestamp) AS next_timestamp,
+    LEAD(event_name) OVER (PARTITION BY session_id ORDER BY custom_timestamp) AS next_event_name,
+    LEAD(funnel_step) OVER (PARTITION BY session_id ORDER BY custom_timestamp) AS next_funnel_step
+  FROM
+    ${ref('stg_test_results_funnel')}
+  WHERE
+    event_name = 'page_view' ),
+  no_next_pageview AS (
+  SELECT
+    date,
+    user_id,
+    device,
+    region,
+    custom_timestamp,
+    event_name,
+    session_id,
+    funnel_step
+  FROM
+    pageviews
+  WHERE
+    next_event_name IS NULL ),
+  events AS (
+  SELECT
+    date,
+    user_id,
+    device,
+    region,
+    session_id,
+    custom_timestamp,
+    event_name,
+    funnel_step
+  FROM (
+    SELECT
+      date,
+      user_id,
+      device,
+      region,
+      custom_timestamp,
+      event_name,
+      session_id,
+      funnel_step,
+      ROW_NUMBER() OVER (PARTITION BY session_id ORDER BY custom_timestamp DESC) AS rn
+    FROM
+      ${ref('stg_test_results_funnel')}
+    WHERE
+      event_name IN ('scroll',
+        'user_engagement') ) ranked_events
+  WHERE
+    rn = 1 )
+    -- Calculate time difference for 'page_view' events where next_event_name is not null
+    ,
+  page_time_diff AS (
+  SELECT
+    date,
+    user_id,
+    device,
+    region,
+    custom_timestamp,
+    event_name,
+    session_id,
+    funnel_step,
+    next_timestamp - custom_timestamp AS time_difference
+  FROM
+    pageviews
+  WHERE
+    next_event_name IS NOT NULL )
+    -- Calculate time difference for the last 'scroll' or 'user_engagement' event after 'page_view'
+    ,
+  event_time_diff AS (
+  SELECT
+    pv.date AS date,
+    pv.user_id AS user_id,
+    pv.device,
+    pv.region,
+    pv.session_id,
+    pv.funnel_step AS funnel_step,
+    CASE
+      WHEN e.custom_timestamp IS NOT NULL AND (e.custom_timestamp / 1000) > pv.custom_timestamp THEN (e.custom_timestamp/1000) - pv.custom_timestamp
+  END
+    AS time_difference
+  FROM
+    no_next_pageview pv
+  LEFT JOIN
+    events e
+  ON
+    pv.session_id = e.session_id
+    AND pv.funnel_step = e.funnel_step
+    AND pv.device = e.device ),
+  unioned AS (
+  -- Union the results
+  SELECT
+    date,
+    user_id,
+    funnel_step AS page,
+    device,
+    region,
+    session_id,
+    time_difference / 1000 AS time_in_seconds
+  FROM
+    page_time_diff
+  UNION ALL
+  SELECT
+    date,
+    user_id,
+    funnel_step AS page,
+    device,
+    region,
+    session_id,
+    time_difference / 1000 AS time_in_seconds
+  FROM
+    event_time_diff
+  WHERE
+    time_difference IS NOT NULL
+  ORDER BY
+    user_id)
+SELECT
+  *
+FROM
+  unioned
+WHERE
+  user_id NOT IN (
+  SELECT
+    user_id
+  FROM
+    ${ref('user_id_to_exclude')} )
