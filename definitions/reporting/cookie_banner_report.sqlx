@@ -8,8 +8,9 @@ SELECT
   COUNT(DISTINCT user_pseudo_id) AS total_users
 FROM ${ref(constants.GA4_TABLE)}
 WHERE
-  _TABLE_SUFFIX BETWEEN '20240201' AND '20240213'
+  _TABLE_SUFFIX >= '20240201'
 GROUP BY
   event_date
 ORDER BY
   event_date
+
