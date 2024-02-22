@@ -30,7 +30,9 @@ WHERE
       '/clinical-services/fertility-nutritionists',
       '/clinical-services/counsellors',
       '/clinical-services/scanning',
-      '/clinical-services/menopause-consultation'
+      '/clinical-services/menopause-consultation',
+      '/checkout/cart',
+      '/checkout/cart-summary'
     )
   )
 GROUP BY
