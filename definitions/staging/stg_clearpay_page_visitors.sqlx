@@ -1,0 +1,37 @@
+config {
+    type: "table"
+}
+
+SELECT
+  date,
+  user_id,
+  device,
+  IF(
+    REGEXP_EXTRACT(page_location_without_query, r'https?://[^/]+(/.+)') IS NULL
+    AND REGEXP_CONTAINS(page_location_without_query, r'^https?://[^/]+/?$'),
+    '/',
+    REGEXP_EXTRACT(page_location_without_query, r'https?://[^/]+(/.+)')
+  ) AS page_path
+FROM
+  ${ref('base_ga4_pages')}
+WHERE
+  user_id IS NOT NULL
+  AND (
+    IF(
+      REGEXP_EXTRACT(page_location_without_query, r'https?://[^/]+(/.+)') IS NULL
+      AND REGEXP_CONTAINS(page_location_without_query, r'^https?://[^/]+/?$'),
+      '/',
+      REGEXP_EXTRACT(page_location_without_query, r'https?://[^/]+(/.+)')
+    ) IN (
+      '/',
+      '/hormone-and-fertility-testing',
+      '/clinical-services/private-gynaecologists',
+      '/clinical-services/fertility-advisors',
+      '/clinical-services/fertility-nutritionists',
+      '/clinical-services/counsellors',
+      '/clinical-services/scanning',
+      '/clinical-services/menopause-consultation'
+    )
+  )
+GROUP BY
+  1,2,3,4

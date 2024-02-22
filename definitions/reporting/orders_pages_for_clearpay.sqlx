@@ -1,0 +1,28 @@
+config {
+  type: "table"
+}
+
+SELECT
+  pv.date,
+  pv.user_id,
+  pv.device,
+  pv.page_path,
+  ed.transaction_id as order_id,
+  ed.region
+FROM
+  `swift-hope-397007.ga4_marts.stg_clearpay_page_visitors` AS pv
+LEFT JOIN (
+  SELECT
+    DISTINCT user_id,
+    date,
+    transaction_id,
+    region
+  FROM
+    `swift-hope-397007.ga4_marts.stg_ecommerce_data`
+  WHERE
+    transaction_id IS NOT NULL
+) AS ed
+ON
+  pv.user_id = ed.user_id AND pv.date = ed.date
+WHERE
+  ed.transaction_id IS NOT NULL

@@ -5,6 +5,7 @@ config {
 SELECT
   date,
   region,
+  user_id,
   CASE
     WHEN b.session_source_medium IS NULL OR b.session_source_medium = " / " THEN 'direct / (none)'
   ELSE

@@ -32,7 +32,9 @@ group by 1,2,3,4,5,6,7,8,9,10
         when b.user_id is not null then user_id else a.user_pseudo_id 
         end
     as stitched_user_id,
+    user_id,
       page,
+      REGEXP_EXTRACT(page, r'([^?#]*)') AS page_location_without_query,
       device,
       source_medium,
       region,
@@ -43,3 +45,4 @@ group by 1,2,3,4,5,6,7,8,9,10
 from prep a
 left join ${ref('base_ga4_user_identification')} b
 on a.user_pseudo_id = b.user_pseudo_id
+where page not like '%stage.hertilityhealth%'
