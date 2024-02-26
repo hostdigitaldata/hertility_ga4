@@ -10,7 +10,9 @@ SELECT
   ed.transaction_id as order_id,
   ed.region
 FROM
-  `swift-hope-397007.ga4_marts.stg_clearpay_page_visitors` AS pv
+   ${ref('stg_clearpay_page_visitors')}
+  
+  AS pv
 LEFT JOIN (
   SELECT
     DISTINCT user_id,
@@ -18,7 +20,7 @@ LEFT JOIN (
     transaction_id,
     region
   FROM
-    `swift-hope-397007.ga4_marts.stg_ecommerce_data`
+     ${ref('stg_ecommerce_data')}
   WHERE
     transaction_id IS NOT NULL
 ) AS ed

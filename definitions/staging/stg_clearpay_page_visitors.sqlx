@@ -37,3 +37,4 @@ WHERE
   )
 GROUP BY
   1,2,3,4
+  order by date desc
