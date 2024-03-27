@@ -1,0 +1,47 @@
+config {
+    type: "table"
+}
+
+WITH
+  user_segments AS (
+  SELECT
+    a.date,
+    a.device,
+    a.source_medium AS traffic_source,
+    a.stitched_user_id AS user_id,
+    a.stitched_user_id AS blog_page_users,
+    c.stitched_user_id AS add_to_cart_users,
+    d.stitched_user_id AS begin_checkout_users,
+    e.stitched_user_id AS purchasers
+  FROM
+    ${ref('stg_blog_landed_users')} a
+  LEFT JOIN
+    ${ref('stg_add_to_cart_users')} c
+  ON
+    a.date = c.date
+    AND a.stitched_user_id = c.stitched_user_id
+  LEFT JOIN
+    ${ref('stg_begin_checkout_users')} d
+  ON
+    a.date = d.date
+    AND a.stitched_user_id = d.stitched_user_id
+  LEFT JOIN
+    ${ref('stg_purchasers')} e
+  ON
+    a.date = e.date
+    AND a.stitched_user_id = e.stitched_user_id )
+SELECT
+  date,
+  device,
+  traffic_source,
+  'all steps' AS bar_dimension,
+  COUNT(DISTINCT blog_page_users) AS funnel_blog_page,
+  COUNT(DISTINCT add_to_cart_users) AS funnel_add_to_cart,
+  COUNT(DISTINCT begin_checkout_users) AS funnel_begin_checkout,
+  COUNT(DISTINCT purchasers) AS funnel_purchase
+FROM
+  user_segments
+GROUP BY
+  1,
+  2,
+  3

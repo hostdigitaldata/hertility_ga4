@@ -1,0 +1,17 @@
+config {
+    type: "table"
+}
+
+SELECT
+  date,
+  device,
+  source_medium,
+  stitched_user_id
+FROM
+  ${ref('base_ga4_pages')}
+WHERE
+  REGEXP_CONTAINS(page_location_without_query, '/hormone-and-fertility-testing|/clinical-services/private-pelvic-ultrasound|/clinical-services/private-pelvic-gynaecologists|/clinical-services/fertility-advisors|/egg-freezing|/clinical-services/menopause-consultation|/clinical-services/fertility-nutritionists|/clinical-services/counsellors')
+GROUP BY
+  all
+ORDER BY
+  date DESC

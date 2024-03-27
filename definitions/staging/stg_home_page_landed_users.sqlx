@@ -1,0 +1,26 @@
+config {
+    type: "table"
+}
+
+SELECT
+     date,
+   device,
+   source_medium,
+   stitched_user_id
+FROM
+  ${ref('base_ga4_pages')}
+WHERE (
+    IF(
+      REGEXP_EXTRACT(page_location_without_query, r'https?://[^/]+(/.+)') IS NULL
+      AND REGEXP_CONTAINS(page_location_without_query, r'^https?://[^/]+/?$'),
+      '/',
+      REGEXP_EXTRACT(page_location_without_query, r'https?://[^/]+(/.+)')
+    ) IN (
+      '/'
+    )
+  )
+
+   and is_landing_page = 1
+GROUP BY
+  all
+  order by date desc

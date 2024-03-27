@@ -1,0 +1,19 @@
+config {
+    type: "table"
+}
+
+SELECT
+  date,
+  device,
+  source_medium,
+  stitched_user_id
+FROM
+  ${ref('base_ga4_pages')}
+WHERE
+is_landing_page = 1
+and
+  REGEXP_CONTAINS(page_location_without_query, 'learn.hertilityhealth')
+GROUP BY
+  all
+ORDER BY
+  date DESC

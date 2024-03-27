@@ -1,0 +1,39 @@
+config {
+  type: "table"
+}
+
+with user_segments as (
+    select 
+        a.date,
+        a.device,
+        a.source_medium as traffic_source,
+        a.stitched_user_id as user_id,
+        a.stitched_user_id as homepage_users,
+        b.stitched_user_id as product_page_users,
+        c.stitched_user_id as add_to_cart_users,
+        d.stitched_user_id as begin_checkout_users,
+        e.stitched_user_id as purchasers
+
+    from ${ref('stg_home_page_landed_users')} a
+    left join ${ref('stg_product_page_users')} b
+        on a.date = b.date and a.stitched_user_id = b.stitched_user_id
+    left join ${ref('stg_add_to_cart_users')} c
+        on a.date = c.date and a.stitched_user_id = c.stitched_user_id
+    left join ${ref('stg_begin_checkout_users')} d
+        on a.date = d.date and a.stitched_user_id = d.stitched_user_id
+    left join ${ref('stg_purchasers')} e
+        on a.date = e.date and a.stitched_user_id = e.stitched_user_id
+)
+
+select 
+    date,
+    device,
+    traffic_source,
+    'all steps' as bar_dimension,
+     count(distinct homepage_users) as funnel_homepage,
+    count(distinct product_page_users) as funnel_product_page,
+     count(distinct add_to_cart_users) as funnel_add_to_cart,
+    count(distinct begin_checkout_users) as funnel_begin_checkout,
+     count(distinct purchasers) as funnel_purchase
+from user_segments
+group by 1, 2, 3

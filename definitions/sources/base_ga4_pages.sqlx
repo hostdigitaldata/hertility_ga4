@@ -15,7 +15,8 @@ with prep as (select
     (select value.string_value from unnest(event_params) where key = 'territory') as region,
     (select value.string_value from unnest(event_params) where key = 'isGuestCheckoutVariant') as is_guest_checkout,
     (select value.int_value from unnest(event_params) where key = 'custom_timestamp') as custom_timestamp,
-    (select value.int_value from unnest(event_params) where key = 'ga_session_id') as session_id
+    (select value.int_value from unnest(event_params) where key = 'ga_session_id') as session_id,
+    MAX(CASE WHEN (select value.int_value from unnest(event_params) where event_name = 'page_view' and key = 'entrances') = 1 THEN 1 ELSE 0 END) as is_landing_page
  from   ${ref(constants.GA4_TABLE)} a
 where
     event_name = 'page_view'
@@ -39,6 +40,7 @@ group by 1,2,3,4,5,6,7,8,9,10
       source_medium,
       region,
       is_guest_checkout,
+      is_landing_page,
       custom_timestamp,
       concat(a.user_pseudo_id,session_id) as session_id
 
