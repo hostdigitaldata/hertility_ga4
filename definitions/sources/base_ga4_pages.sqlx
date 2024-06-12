@@ -33,6 +33,7 @@ group by 1,2,3,4,5,6,7,8,9,10
         when b.user_id is not null then user_id else a.user_pseudo_id 
         end
     as stitched_user_id,
+    a.user_pseudo_id,
     user_id,
       page,
       REGEXP_EXTRACT(page, r'([^?#]*)') AS page_location_without_query,

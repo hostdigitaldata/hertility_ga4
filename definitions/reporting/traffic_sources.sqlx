@@ -1,0 +1,23 @@
+config {
+    type: "table"
+}
+
+SELECT
+  date,
+  u.user_id as user_id,
+  a.user_pseudo_id,
+  session_id,
+  CASE
+    WHEN b.session_source_medium IS NULL OR b.session_source_medium = " / " THEN 'direct / (none)'
+  ELSE
+  session_source_medium
+END
+  AS session_source_medium
+FROM
+  ${ref("stg_page_visitors")} a
+LEFT JOIN
+  ${ref("stg_last_non_direct_attribution")} b
+ON
+  CAST(a.session_id AS STRING) = b.first_session_id
+left join ${ref('base_ga4_user_identification')} u
+on a.user_pseudo_id = u.user_pseudo_id
