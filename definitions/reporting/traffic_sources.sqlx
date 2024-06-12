@@ -1,7 +1,7 @@
 config {
     type: "table"
 }
-
+with prep as(
 SELECT
   date,
   u.user_id as user_id,
@@ -20,4 +20,37 @@ LEFT JOIN
 ON
   CAST(a.session_id AS STRING) = b.first_session_id
 left join ${ref('base_ga4_user_identification')} u
-on a.user_pseudo_id = u.user_pseudo_id
+on a.user_pseudo_id = u.user_pseudo_id),
+
+stg as (
+
+  select date,
+  user_id,
+  user_pseudo_id,
+  session_id,
+  SPLIT(session_source_medium, ' / ')[SAFE_OFFSET(0)] AS source,
+    SPLIT(session_source_medium, ' / ')[SAFE_OFFSET(1)] AS medium
+    from prep
+    group by all
+)
+
+
+select date,
+  user_id,
+  user_pseudo_id,
+  session_id,
+    CASE 
+    WHEN source = 'google' AND medium IN ('cpc') THEN 'Paid Search'
+    WHEN source IN ('ig', 'fb') AND medium = 'paidsocial' THEN 'Paid Social'
+    WHEN source IN ('facebook.com', 'instagram.com', 'twitter.com', 'linkedin.com', 'pinterest.com', 'youtube.com', 't.co', 'm.facebook.com', 'l.instagram.com') 
+         OR medium IN ('social', 'social-network', 'social-media', 'sm', 'social network', 'social media') THEN 'Organic Social'
+    WHEN source IN ('email', 'e-mail', 'e_mail', 'e mail') OR medium IN ('email', 'e-mail', 'e_mail', 'e mail') THEN 'Email'
+    WHEN source = '(direct)' AND medium IN ('(not set)', '(none)') THEN 'Direct'
+    WHEN source IN ('google', 'uk.search.yahoo.com','bing', 'baidu', 'duckduckgo', 'ecosia.org', 'yahoo', 'qwant', 'aol', 'naver') OR medium = 'organic' THEN 'Organic Search'
+    WHEN medium IN ('referral', 'app', 'link') THEN 'Referral'
+    WHEN medium = 'affiliate' THEN 'Affiliates'
+    ELSE 'Other'
+  END AS default_channel
+
+  from stg
+  group by all
