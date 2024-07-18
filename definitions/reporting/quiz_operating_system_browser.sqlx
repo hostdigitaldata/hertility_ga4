@@ -39,3 +39,4 @@ quiz_events as (
 )
 
 select * from quiz_events
+where user_pseudo_id is not null
