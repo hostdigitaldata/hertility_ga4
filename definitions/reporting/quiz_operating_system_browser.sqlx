@@ -5,7 +5,7 @@ config {
 
 with event_data as (
   select
-    date,
+    event_timestamp,
     session_id,
     user_pseudo_id,
     user_id,
@@ -18,7 +18,7 @@ with event_data as (
 
 quiz_events as (
   select
-    date,
+    event_timestamp,
     session_id,
     user_pseudo_id,
     user_id,
@@ -28,14 +28,7 @@ quiz_events as (
     max(case when event_name = 'quiz_start' then 1 else 0 end) as quiz_start,
     max(case when event_name = 'quiz_finish' then 1 else 0 end) as quiz_finish
   from event_data
-  group by 
-    date,
-    session_id,
-    user_pseudo_id,
-    user_id,
-    device_category,
-    operating_system,
-    browser
+  group by all
 )
 
 select * from quiz_events

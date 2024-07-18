@@ -3,7 +3,7 @@ config {
 }
 
 select
-   date,
+   event_timestamp,
    session_id,
    user_pseudo_id,
    user_id,
