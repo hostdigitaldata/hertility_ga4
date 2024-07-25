@@ -1,6 +1,5 @@
 config {
-  type: "table",
-  description: "Summary of quiz start and finish events"
+  type: "table"
 }
 
 
