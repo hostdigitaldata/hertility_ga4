@@ -4,15 +4,12 @@ config {
 
 select
    event_timestamp,
-   session_id,
    user_pseudo_id,
    user_id,
+   concat(user_pseudo_id,session_id) as session_id,
    device,
    operating_system,
-   browser,
-   event_name
+   browser
 
-from ${ ref('base_ga4_events') }
-where event_name in ( 'quiz_start', 'quiz_finish')
-
+from ${ ref('base_system') }
 group by all

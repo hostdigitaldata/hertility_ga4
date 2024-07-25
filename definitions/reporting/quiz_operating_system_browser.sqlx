@@ -3,7 +3,7 @@ config {
   description: "Summary of quiz start and finish events"
 }
 
-with event_data as (
+
   select
     event_timestamp,
     session_id,
@@ -11,25 +11,5 @@ with event_data as (
     user_id,
     device as device_category,
     operating_system,
-    browser,
-    event_name
-  from ${ref("stg_quiz_event")}
-),
-
-quiz_events as (
-  select
-    event_timestamp,
-    session_id,
-    user_pseudo_id,
-    user_id,
-    device_category,
-    operating_system,
-    browser,
-    max(case when event_name = 'quiz_start' then 1 else 0 end) as quiz_start,
-    max(case when event_name = 'quiz_finish' then 1 else 0 end) as quiz_finish
-  from event_data
-  group by all
-)
-
-select * from quiz_events
-where user_pseudo_id is not null
+    browser
+  from ${ref("stg_system_event")}

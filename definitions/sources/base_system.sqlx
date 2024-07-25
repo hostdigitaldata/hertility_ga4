@@ -1,0 +1,22 @@
+config {
+  type: "table"
+}
+ js {
+    var { TIME_ZONE } = require("includes/constants");
+  }
+
+select
+     datetime(timestamp_micros(event_timestamp), '${constants.TIME_ZONE}') as event_timestamp,
+     user_pseudo_id,
+     user_id,
+     (select value.int_value from unnest(event_params) where key = 'ga_session_id') as session_id,
+     device.category as device,
+     device.operating_system,
+     device.web_info.browser
+
+from 
+     ${ref(constants.GA4_TABLE)} 
+where 
+     user_id is not null and _TABLE_SUFFIX >= '20240401' and user_pseudo_id is not null
+group by 
+     all
