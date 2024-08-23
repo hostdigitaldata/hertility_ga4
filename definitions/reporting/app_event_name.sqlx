@@ -1,0 +1,16 @@
+config {
+  type: "table"
+}
+
+
+  select
+    date,
+    event_name,
+    session_id,
+    user_pseudo_id,
+    user_id,
+    device_category,
+    operating_system
+  from ${ref("base_ga4_app_events")}
+  where event_name is not null
+  group by all

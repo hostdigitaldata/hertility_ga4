@@ -1,0 +1,36 @@
+config {
+  type: "table"
+}
+ js {
+    var { TIME_ZONE } = require("includes/constants");
+  }
+
+with prep as 
+(select
+    date(timestamp_micros(event_timestamp), '${constants.TIME_ZONE}') as date,
+    event_name,
+    device.category as device_category,
+    device.operating_system,
+    datetime(timestamp_micros(event_timestamp), '${constants.TIME_ZONE}') as event_timestamp,
+    (select value.string_value from unnest(event_params) where key = 'page_location') as screen_name,
+    (select value.int_value from unnest(event_params) where key = 'ga_session_id') as session_id,
+    user_pseudo_id,
+    user_id
+from
+    ${ref(constants.GA4_TABLE)}
+where
+   stream_id = '8528828438' and _TABLE_SUFFIX >= '20240822'
+)
+
+ select
+      date,
+      event_timestamp,
+      event_name,
+      device_category,
+      operating_system,
+      screen_name,
+      user_id,
+      user_pseudo_id,
+      concat(user_pseudo_id,session_id) as session_id
+
+from prep
