@@ -5,6 +5,7 @@ config {
 
   select
     date,
+    event_timestamp,
     event_name,
     session_id,
     user_pseudo_id,
