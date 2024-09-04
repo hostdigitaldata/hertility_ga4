@@ -9,7 +9,7 @@ WITH UserKitJourney AS (
             WHEN regexp_contains(lower(page), r'/health-assessment') THEN TRUE
             ELSE FALSE
         END) AS user_kit_journey_inclusion
-    FROM `swift-hope-397007.ga4_marts.base_guest_checkout`
+    FROM ${ref("base_guest_checkout")}
     GROUP BY user_pseudo_id
 ),
 UserNonKitJourney AS (
@@ -19,7 +19,7 @@ UserNonKitJourney AS (
             WHEN regexp_contains(lower(page), r'/checkout/cart$') THEN TRUE
             ELSE FALSE
         END) AS user_non_kit_journey_inclusion
-    FROM `swift-hope-397007.ga4_marts.base_guest_checkout`
+    FROM ${ref("base_guest_checkout")}
     GROUP BY user_pseudo_id
 )
 SELECT
@@ -55,7 +55,7 @@ SELECT
     END AS funnel_type,
     b.user_kit_journey_inclusion AS kit_journey_inclusion,
     c.user_non_kit_journey_inclusion AS non_kit_journey_inclusion
-FROM `swift-hope-397007.ga4_marts.base_guest_checkout` a
+FROM ${ref("base_guest_checkout")} a
 LEFT JOIN UserKitJourney b
 ON a.user_pseudo_id = b.user_pseudo_id
 LEFT JOIN UserNonKitJourney c
