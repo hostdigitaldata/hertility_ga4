@@ -2,7 +2,7 @@
   "defaultSchema": "ga4_marts",
   "assertionSchema": "dataform_assertions",
   "warehouse": "bigquery",
-  "defaultDatabase": "swift-hope-397007",
+  "defaultDatabase": "hertility-web-and-app-data",
   "defaultLocation": "europe-west2"
 }
     
