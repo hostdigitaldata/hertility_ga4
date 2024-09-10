@@ -7,6 +7,7 @@ SELECT
   u.user_id as user_id,
   a.user_pseudo_id,
   session_id,
+  a.event_timestamp,
   CASE
     WHEN b.session_source_medium IS NULL OR b.session_source_medium = " / " THEN 'direct / (none)'
   ELSE
@@ -25,6 +26,7 @@ on a.user_pseudo_id = u.user_pseudo_id),
 stg as (
 
   select date,
+  event_timestamp,
   user_id,
   user_pseudo_id,
   session_id,
@@ -35,7 +37,9 @@ stg as (
 )
 
 
-select date,
+select 
+  date,
+  event_timestamp,
   user_id,
   user_pseudo_id,
   session_id,
